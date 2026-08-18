@@ -1,3 +1,5 @@
+#!/Users/mayanksharma/.local/state/fnm_multishells/28595_1787032920678/bin/node
+// Shebang
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -13,8 +15,9 @@ const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".aiff", ".m4a", ".ogg", ".fla
 // List all songs in the folder synchronously using `fs.readdirSync`
 function listSongs(directoryPath) {
     try {
+        const pathExist = fs.existsSync(directoryPath)
         // Check if songs directory exists, if not create it
-        if (!fs.existsSync(directoryPath)) {
+        if (!pathExist) {
             fs.mkdirSync(directoryPath, { recursive: true });
         }
 
