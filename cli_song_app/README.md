@@ -1,11 +1,12 @@
 # CLI Song App
 
-Simple CLI Song Player built with Node.js using `child_process` (`spawn`), `ls`, `afplay` (macOS), and `process.stdin.on("data")`.
+Cross-platform CLI Song Player built with Node.js using `fs`, `path`, `child_process.spawn`, and `process.stdin.on("data")`.
 
 ## Features
-- **`listSongs(directoryPath)`**: Lists all audio files from the `./songs` directory using `spawn("ls", [directoryPath])`.
-- **`playSong(songPath)`**: Plays the chosen audio file using `spawn("afplay", [songPath])`.
-- **`process.stdin.on("data", ...)`**: Reads terminal input to let you choose songs by number, stop playback, list files, or exit.
+- 🌐 **Cross-Platform Directory Scanning**: Uses Node's native `fs.readdir` and `path.join` to list songs on macOS, Windows, and Linux.
+- 🎵 **Audio File Filtering**: Automatically filters audio formats (`.mp3`, `.wav`, `.aiff`, `.m4a`, `.ogg`, `.flac`).
+- 🔊 **OS-Aware Audio Playback**: Spawns the appropriate native player (`afplay` on macOS, PowerShell `SoundPlayer` on Windows, `aplay` on Linux).
+- ⌨️ **Interactive Terminal Controls**: Select by song number (`1`, `2`, ...), `list`, `stop`, or `exit`.
 
 ---
 

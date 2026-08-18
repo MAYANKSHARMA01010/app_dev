@@ -1,34 +1,70 @@
-const { spawn } = require("child_process");
+const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 
-const SONGS_DIR = "./songs";
+const SONGS_DIR = path.join(__dirname, "songs");
 
 let songList = [];
 let currentPlayer = null;
 
-// List all songs in the folder using `ls`
-function listSongs(directoryPath) {
-    const scanner = spawn("ls", [directoryPath]);
+// Supported audio file extensions
+const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".aiff", ".m4a", ".ogg", ".flac", ".aac"]);
 
-    scanner.stdout.on("data", (data) => {
-        songList = data
-            .toString()
-            .split("\n")
-            .filter(song => song.trim() !== "");
+// List all songs in the folder synchronously using `fs.readdirSync`
+function listSongs(directoryPath) {
+    try {
+        // Check if songs directory exists, if not create it
+        if (!fs.existsSync(directoryPath)) {
+            fs.mkdirSync(directoryPath, { recursive: true });
+        }
+
+        const files = fs.readdirSync(directoryPath);
+
+        // Filter only audio files (or all files if extensions aren't matched)
+        songList = files.filter(file => {
+            const ext = path.extname(file).toLowerCase();
+            return AUDIO_EXTENSIONS.has(ext);
+        });
+
+        // If no matching audio extension found, fallback to all non-hidden files
+        if (songList.length === 0) {
+            songList = files.filter(file => !file.startsWith("."));
+        }
 
         console.log(`\nSongs in ${directoryPath}:`);
-        songList.forEach((song, index) => {
-            console.log(`${index + 1}. ${song}`);
-        });
+        if (songList.length === 0) {
+            console.log("  (No audio files found in ./songs directory)");
+        } else {
+            songList.forEach((song, index) => {
+                console.log(`${index + 1}. ${song}`);
+            });
+        }
         console.log("\nEnter song number to play (or 'list', 'stop', 'exit'): ");
-    });
-
-    scanner.stderr.on("data", (data) => {
-        console.error(`Error listing songs: ${data}`);
-    });
+    } catch (err) {
+        console.error(`Error reading directory: ${err.message}`);
+    }
 }
 
-// Play a song using `afplay`
+// Cross-platform audio player spawn helper
+function getAudioPlayer(songPath) {
+    const platform = process.platform;
+
+    if (platform === "darwin") {
+        // macOS built-in player
+        return spawn("afplay", [songPath]);
+    } else if (platform === "win32") {
+        // Windows Media Player / PowerShell player
+        return spawn("powershell", [
+            "-c",
+            `(New-Object System.Media.SoundPlayer "${songPath}").PlaySync()`
+        ]);
+    } else {
+        // Linux (aplay, paplay, or mpv)
+        return spawn("aplay", [songPath]);
+    }
+}
+
+// Play a song
 function playSong(songPath) {
     // If a song is already playing, stop it first
     if (currentPlayer) {
@@ -36,16 +72,16 @@ function playSong(songPath) {
         currentPlayer = null;
     }
 
-    console.log(`\n▶ Playing: ${songPath}`);
-    currentPlayer = spawn("afplay", [songPath]);
+    console.log(`\n▶ Playing: ${path.basename(songPath)}`);
+    currentPlayer = getAudioPlayer(songPath);
 
     currentPlayer.stderr.on("data", (data) => {
-        console.error(`Error playing song: ${data}`);
+        console.error(`Playback notice: ${data}`);
     });
 
     currentPlayer.on("close", (code) => {
         if (code === 0) {
-            console.log(`\nFinished playing: ${songPath}`);
+            console.log(`\nFinished playing: ${path.basename(songPath)}`);
         } else if (code !== null && code !== 0) {
             console.log(`Player stopped.`);
         }
