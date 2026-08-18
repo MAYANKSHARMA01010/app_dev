@@ -1,0 +1,12 @@
+{
+  "name": "cli-song-app",
+  "version": "1.0.0",
+  "description": "Interactive CLI Song Player Application in Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["cli", "song-player", "music", "nodejs"],
+  "author": "",
+  "license": "ISC"
+}
