@@ -7,6 +7,7 @@ let songs = undefined
 let userSelectionIndex = 0
 let currentlyPlaying = null
 let currentProcess = null
+let isPause = true;
 
 // List Available Songs to User
 function listSongs(songDirectoryPath) {
@@ -54,6 +55,14 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
     process.stdin.resume()
 
     process.stdin.on('data', (rawUserInput) => {
+        if (rawUserInput[0] === " ") {
+            isPause = !isPause
+            if (isPause) {
+                currentProcess.kill()
+            } else {
+                playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
+            }
+        }
         if (rawUserInput[0] === 0x03) { // Ctrl+C
             if (currentProcess) currentProcess.kill()
             process.exit(0)
