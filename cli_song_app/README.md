@@ -1,12 +1,13 @@
 # CLI Song App
 
-Cross-platform CLI Song Player built with Node.js using `fs`, `path`, `child_process.spawn`, and `process.stdin.on("data")`.
+Interactive cross-platform CLI Song Player built with Node.js using `readline`, `fs`, `path`, `child_process.spawn`, and `process.stdin`.
 
 ## Features
-- 🌐 **Cross-Platform Directory Scanning**: Uses Node's native `fs.readdir` and `path.join` to list songs on macOS, Windows, and Linux.
-- 🎵 **Audio File Filtering**: Automatically filters audio formats (`.mp3`, `.wav`, `.aiff`, `.m4a`, `.ogg`, `.flac`).
-- 🔊 **OS-Aware Audio Playback**: Spawns the appropriate native player (`afplay` on macOS, PowerShell `SoundPlayer` on Windows, `aplay` on Linux).
-- ⌨️ **Interactive Terminal Controls**: Select by song number (`1`, `2`, ...), `list`, `stop`, or `exit`.
+- 📂 **Dynamic Directory Prompt**: Prompts for custom song directory on startup (with default `./songs` and `~` home expansion support).
+- 🎵 **Multiple Audio Format Support**: Automatically scans and filters audio files (`.mp3`, `.wav`, `.aiff`, `.m4a`, `.ogg`, `.flac`, `.aac`).
+- ⌨️ **Interactive Terminal UI**: Arrow keys (`↑`/`↓`) to navigate through the song list in real time.
+- 🔊 **Cross-Platform Audio Playback**: Spawns native system players (`afplay` on macOS, PowerShell `SoundPlayer` on Windows, `aplay` on Linux).
+- ⏹️ **Playback Management**: Automatically stops previously playing track before playing a new one; dedicated stop button (`s` / `Space`).
 
 ---
 
@@ -19,7 +20,15 @@ Cross-platform CLI Song Player built with Node.js using `fs`, `path`, `child_pro
 
 2. Start the application:
    ```bash
+   npm start
+   # or
    node index.js
    ```
 
-3. Type a song number (e.g. `1`), or commands like `list`, `stop`, `exit`.
+3. Enter the path to your songs folder (or press **Enter** to use the default `./songs` folder).
+
+4. **Controls**:
+   - `↑` / `↓`: Navigate songs
+   - `Enter`: Play selected song
+   - `s` / `Space`: Stop playback
+   - `q` / `Ctrl+C`: Quit application

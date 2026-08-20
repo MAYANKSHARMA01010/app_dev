@@ -1,139 +1,237 @@
-#!/Users/mayanksharma/.local/state/fnm_multishells/28595_1787032920678/bin/node
-// Shebang
-const fs = require("fs");
-const path = require("path");
-const { spawn } = require("child_process");
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+const os = require('os');
 
-const SONGS_DIR = path.join(__dirname, "songs");
+// Audio file extensions supported
+const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.aiff', '.m4a', '.ogg', '.flac', '.aac'];
 
-let songList = [];
-let currentPlayer = null;
+let songsDir = '';
+let songs = [];
+let userSelectionIndex = 0;
+let currentPlayProcess = null;
+let currentPlayingSong = null;
 
-// Supported audio file extensions
-const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".aiff", ".m4a", ".ogg", ".flac", ".aac"]);
+// Prompt user for songs directory path
+function promptSongDirectory() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
 
-// List all songs in the folder synchronously using `fs.readdirSync`
-function listSongs(directoryPath) {
-    try {
-        const pathExist = fs.existsSync(directoryPath)
-        // Check if songs directory exists, if not create it
-        if (!pathExist) {
-            fs.mkdirSync(directoryPath, { recursive: true });
-        }
+    return new Promise((resolve) => {
+        const ask = () => {
+            rl.question('🎵 Enter songs directory path (default: ./songs): ', (answer) => {
+                let inputPath = answer.trim();
+                if (!inputPath) {
+                    inputPath = './songs';
+                }
 
-        const files = fs.readdirSync(directoryPath);
+                // Expand ~ to user home directory
+                if (inputPath.startsWith('~')) {
+                    inputPath = path.join(os.homedir(), inputPath.slice(1));
+                }
 
-        // Filter only audio files (or all files if extensions aren't matched)
-        songList = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
-            return AUDIO_EXTENSIONS.has(ext);
-        });
+                const resolvedPath = path.resolve(process.cwd(), inputPath);
 
-        // If no matching audio extension found, fallback to all non-hidden files
-        if (songList.length === 0) {
-            songList = files.filter(file => !file.startsWith("."));
-        }
+                if (!fs.existsSync(resolvedPath)) {
+                    console.log(`\x1b[31m❌ Directory not found: "${resolvedPath}". Please try again.\x1b[0m\n`);
+                    ask();
+                    return;
+                }
 
-        console.log(`\nSongs in ${directoryPath}:`);
-        if (songList.length === 0) {
-            console.log("  (No audio files found in ./songs directory)");
-        } else {
-            songList.forEach((song, index) => {
-                console.log(`${index + 1}. ${song}`);
+                try {
+                    const stats = fs.statSync(resolvedPath);
+                    if (!stats.isDirectory()) {
+                        console.log(`\x1b[31m❌ "${resolvedPath}" is not a directory. Please try again.\x1b[0m\n`);
+                        ask();
+                        return;
+                    }
+                } catch (err) {
+                    console.log(`\x1b[31m❌ Error accessing "${resolvedPath}": ${err.message}. Please try again.\x1b[0m\n`);
+                    ask();
+                    return;
+                }
+
+                // Check if directory contains supported songs
+                try {
+                    const files = fs.readdirSync(resolvedPath);
+                    const matchingSongs = files.filter((file) =>
+                        AUDIO_EXTENSIONS.includes(path.extname(file).toLowerCase())
+                    );
+
+                    if (matchingSongs.length === 0) {
+                        console.log(`\x1b[33m⚠️  No audio files found in "${resolvedPath}". Please choose a folder with audio files.\x1b[0m\n`);
+                        ask();
+                        return;
+                    }
+                } catch (err) {
+                    console.log(`\x1b[31m❌ Error reading directory: ${err.message}. Please try again.\x1b[0m\n`);
+                    ask();
+                    return;
+                }
+
+                rl.close();
+                resolve(resolvedPath);
             });
-        }
-        console.log("\nEnter song number to play (or 'list', 'stop', 'exit'): ");
-    } catch (err) {
-        console.error(`Error reading directory: ${err.message}`);
-    }
+        };
+
+        ask();
+    });
 }
 
-// Cross-platform audio player spawn helper
-function getAudioPlayer(songPath) {
-    const platform = process.platform;
+// Load available songs from directory
+function loadSongs(songDirectoryPath) {
+    const files = fs.readdirSync(songDirectoryPath);
+    songs = files.filter((file) =>
+        AUDIO_EXTENSIONS.includes(path.extname(file).toLowerCase())
+    );
+}
 
-    if (platform === "darwin") {
-        // macOS built-in player
-        return spawn("afplay", [songPath]);
-    } else if (platform === "win32") {
-        // Windows Media Player / PowerShell player
-        return spawn("powershell", [
-            "-c",
-            `(New-Object System.Media.SoundPlayer "${songPath}").PlaySync()`
+// Render the interactive CLI UI
+function renderUI() {
+    console.clear();
+    console.log('\x1b[1m\x1b[36m=== 🎧 CLI SONG PLAYER ===\x1b[0m');
+    console.log(`\x1b[90m📁 Directory: ${songsDir}\x1b[0m\n`);
+
+    if (currentPlayingSong) {
+        console.log(`\x1b[32m▶️  Now Playing: \x1b[1m${currentPlayingSong}\x1b[0m`);
+    } else {
+        console.log('\x1b[90m⏹️  Playback: Stopped\x1b[0m');
+    }
+
+    console.log('\n\x1b[1m🎵 Song List:\x1b[0m');
+    songs.forEach((song, ind) => {
+        if (ind === userSelectionIndex) {
+            console.log(`  \x1b[36m\x1b[1m❯ ${ind + 1}. ${song}\x1b[0m`);
+        } else {
+            console.log(`    \x1b[37m${ind + 1}. ${song}\x1b[0m`);
+        }
+    });
+
+    console.log('\n\x1b[90m────────────────────────────────────────\x1b[0m');
+    console.log('\x1b[33mControls:\x1b[0m \x1b[1m[↑/↓]\x1b[0m Navigate | \x1b[1m[Enter]\x1b[0m Play | \x1b[1m[s/Space]\x1b[0m Stop | \x1b[1m[q / Ctrl+C]\x1b[0m Quit');
+}
+
+// Stop current song playback
+function stopSong() {
+    if (currentPlayProcess) {
+        try {
+            currentPlayProcess.kill();
+        } catch (e) {
+            // Ignore if already dead
+        }
+        currentPlayProcess = null;
+    }
+    currentPlayingSong = null;
+}
+
+// Play song cross-platform
+function playSong(songFilePath, songName) {
+    stopSong();
+
+    currentPlayingSong = songName;
+
+    const platform = process.platform;
+    if (platform === 'darwin') {
+        currentPlayProcess = spawn('afplay', [songFilePath]);
+    } else if (platform === 'win32') {
+        currentPlayProcess = spawn('powershell', [
+            '-c',
+            `(New-Object Media.SoundPlayer "${songFilePath}").PlaySync()`
         ]);
     } else {
-        // Linux (aplay, paplay, or mpv)
-        return spawn("aplay", [songPath]);
-    }
-}
-
-// Play a song
-function playSong(songPath) {
-    // If a song is already playing, stop it first
-    if (currentPlayer) {
-        currentPlayer.kill();
-        currentPlayer = null;
+        currentPlayProcess = spawn('aplay', [songFilePath]);
     }
 
-    console.log(`\n▶ Playing: ${path.basename(songPath)}`);
-    currentPlayer = getAudioPlayer(songPath);
-
-    currentPlayer.stderr.on("data", (data) => {
-        console.error(`Playback notice: ${data}`);
+    currentPlayProcess.on('close', () => {
+        if (currentPlayingSong === songName) {
+            currentPlayingSong = null;
+            renderUI();
+        }
     });
 
-    currentPlayer.on("close", (code) => {
-        if (code === 0) {
-            console.log(`\nFinished playing: ${path.basename(songPath)}`);
-        } else if (code !== null && code !== 0) {
-            console.log(`Player stopped.`);
+    currentPlayProcess.on('error', (err) => {
+        currentPlayingSong = `Error: ${err.message}`;
+        renderUI();
+    });
+
+    renderUI();
+}
+
+// Cleanup and exit cleanly
+function exitApp() {
+    stopSong();
+    if (process.stdin.isTTY) {
+        try {
+            process.stdin.setRawMode(false);
+        } catch (e) {}
+    }
+    console.clear();
+    console.log('\n👋 Thanks for using CLI Song Player. Goodbye!\n');
+    process.exit(0);
+}
+
+// Main application flow
+async function main() {
+    console.clear();
+    console.log('\x1b[1m\x1b[36m🎵 Welcome to CLI Song Player\x1b[0m\n');
+
+    songsDir = await promptSongDirectory();
+    loadSongs(songsDir);
+    userSelectionIndex = 0;
+
+    renderUI();
+
+    // Setup raw mode for interactive navigation
+    if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+    }
+    process.stdin.resume();
+
+    process.stdin.on('data', (rawUserInput) => {
+        // Ctrl+C (0x03) or 'q' / 'Q' (0x71, 0x51)
+        if (rawUserInput[0] === 0x03 || rawUserInput[0] === 0x71 || rawUserInput[0] === 0x51) {
+            exitApp();
+            return;
         }
-        currentPlayer = null;
+
+        // Enter key (CR: 0x0d, LF: 0x0a)
+        if (rawUserInput[0] === 0x0d || rawUserInput[0] === 0x0a) {
+            if (songs.length > 0) {
+                const selectedSong = songs[userSelectionIndex];
+                playSong(path.join(songsDir, selectedSong), selectedSong);
+            }
+            return;
+        }
+
+        // 's' or 'S' (0x73, 0x53) or Space (0x20) -> Stop playback
+        if (rawUserInput[0] === 0x73 || rawUserInput[0] === 0x53 || rawUserInput[0] === 0x20) {
+            stopSong();
+            renderUI();
+            return;
+        }
+
+        // Arrow keys ANSI escape sequence: \x1b[A (Up) and \x1b[B (Down)
+        if (rawUserInput[0] === 0x1b && rawUserInput[1] === 0x5b) {
+            if (rawUserInput[2] === 0x41) {
+                // Up Arrow
+                userSelectionIndex = Math.max(0, userSelectionIndex - 1);
+                renderUI();
+                return;
+            }
+            if (rawUserInput[2] === 0x42) {
+                // Down Arrow
+                userSelectionIndex = Math.min(songs.length - 1, userSelectionIndex + 1);
+                renderUI();
+                return;
+            }
+        }
     });
 }
 
-// Stop currently playing song
-function stopSong() {
-    if (currentPlayer) {
-        currentPlayer.kill();
-        currentPlayer = null;
-        console.log("⏹ Playback stopped.");
-    } else {
-        console.log("No song is currently playing.");
-    }
-}
-
-// Initial listing of songs
-listSongs(SONGS_DIR);
-
-// Handle terminal inputs via process.stdin.on("data")
-process.stdin.setEncoding("utf-8");
-
-process.stdin.on("data", (data) => {
-    const input = data.toString().trim();
-
-    if (!input) return;
-
-    const num = parseInt(input);
-
-    if (!isNaN(num)) {
-        // User entered a song number
-        if (num >= 1 && num <= songList.length) {
-            const selectedSong = songList[num - 1];
-            const songPath = path.join(SONGS_DIR, selectedSong);
-            playSong(songPath);
-        } else {
-            console.log(`Invalid number. Please select between 1 and ${songList.length}`);
-        }
-    } else if (input.toLowerCase() === "list" || input.toLowerCase() === "ls") {
-        listSongs(SONGS_DIR);
-    } else if (input.toLowerCase() === "stop") {
-        stopSong();
-    } else if (input.toLowerCase() === "exit" || input.toLowerCase() === "quit") {
-        stopSong();
-        console.log("Exiting song player...");
-        process.exit(0);
-    } else {
-        console.log(`Unknown command: "${input}". Type a song number, 'list', 'stop', or 'exit'.`);
-    }
+main().catch((err) => {
+    console.error('An unexpected error occurred:', err);
+    process.exit(1);
 });
