@@ -19,10 +19,13 @@ function listSongs(songDirectoryPath) {
         console.log(`${prefix}${ind + 1}. ${song}`);
     });
     console.log(`\nPress 'Enter' to play song`)
+    console.log(`Press 'p' or 'P' to play/pause`)
     console.log(`Press 'Up' or 'Down' arrow to navigate`)
     console.log(`Press 'Ctrl + C' to exit\n`)
     if (!currentlyPlaying) {
         console.log(`Not Playing Anything`)
+    } else if (isPause) {
+        console.log(`Currently Paused: ${currentlyPlaying}`)
     } else {
         console.log(`Currently Playing: ${currentlyPlaying}`)
     }
@@ -31,9 +34,32 @@ function listSongs(songDirectoryPath) {
 // Play Song
 function playSong(songFilePath) {
     if (currentProcess) {
+        currentProcess.removeAllListeners('exit')
         currentProcess.kill()
     }
+    isPause = false
     currentProcess = spawn('afplay', [songFilePath])
+    currentProcess.on('exit', () => {
+        currentProcess = null
+        currentlyPlaying = null
+        isPause = true
+        listSongs(SONGS_DIR)
+    })
+}
+
+// Toggle Play / Pause
+function togglePlayPause() {
+    if (!currentlyPlaying || !currentProcess) {
+        currentlyPlaying = songs[userSelectionIndex]
+        playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
+    } else {
+        isPause = !isPause
+        if (isPause) {
+            currentProcess.kill('SIGSTOP')
+        } else {
+            currentProcess.kill('SIGCONT')
+        }
+    }
 }
 
 // Ask user for songs path
@@ -55,23 +81,20 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
     process.stdin.resume()
 
     process.stdin.on('data', (rawUserInput) => {
-        if (rawUserInput[0] === " ") {
-            isPause = !isPause
-            if (isPause) {
+        const key = rawUserInput.toString()
+
+        if (key === 'p' || key === 'P' || rawUserInput[0] === 0x20) {
+            togglePlayPause()
+        } else if (rawUserInput[0] === 0x03) { // Ctrl+C
+            if (currentProcess) {
+                currentProcess.removeAllListeners('exit')
                 currentProcess.kill()
-            } else {
-                playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
             }
-        }
-        if (rawUserInput[0] === 0x03) { // Ctrl+C
-            if (currentProcess) currentProcess.kill()
             process.exit(0)
-        }
-        if (rawUserInput[0] === 0x0d) { // Enter
+        } else if (rawUserInput[0] === 0x0d) { // Enter
             currentlyPlaying = songs[userSelectionIndex]
             playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
-        }
-        if (rawUserInput[0] === 0x1b && rawUserInput[1] === 0x5b) {
+        } else if (rawUserInput[0] === 0x1b && rawUserInput[1] === 0x5b) {
             if (rawUserInput[2] === 0x41) { // Up Key
                 userSelectionIndex = Math.max(0, userSelectionIndex - 1)
             }
@@ -82,3 +105,4 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
         listSongs(SONGS_DIR)
     })
 })
+
