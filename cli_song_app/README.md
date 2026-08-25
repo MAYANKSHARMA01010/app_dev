@@ -29,8 +29,10 @@ Interactive cross-platform CLI Song Player built with Node.js using `readline`, 
 
 4. **Controls**:
    - `↑` / `↓`: Navigate songs
+   - `←` / `→`: Change song (Previous / Next) & play immediately
    - `Enter`: Play selected song
    - `p` / `P` / `Space`: Play / Pause playback
    - `Ctrl+C`: Quit application
+
 
 

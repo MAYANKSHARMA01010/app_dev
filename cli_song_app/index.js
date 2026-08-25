@@ -21,6 +21,7 @@ function listSongs(songDirectoryPath) {
     console.log(`\nPress 'Enter' to play song`)
     console.log(`Press 'p', 'P' or 'Space' to play/pause`)
     console.log(`Press 'Up' or 'Down' arrow to navigate`)
+    console.log(`Press 'Left' or 'Right' arrow to change song`)
     console.log(`Press 'Ctrl + C' to exit\n`)
     if (!currentlyPlaying) {
         console.log(`Not Playing Anything`)
@@ -98,9 +99,16 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
             if (songs && songs.length > 0) {
                 if (rawUserInput[2] === 0x41) { // Up Key (wrap to bottom)
                     userSelectionIndex = (userSelectionIndex - 1 + songs.length) % songs.length
-                }
-                if (rawUserInput[2] === 0x42) { // Down Key (wrap to top)
+                } else if (rawUserInput[2] === 0x42) { // Down Key (wrap to top)
                     userSelectionIndex = (userSelectionIndex + 1) % songs.length
+                } else if (rawUserInput[2] === 0x44) { // Left Key (Previous song & play)
+                    userSelectionIndex = (userSelectionIndex - 1 + songs.length) % songs.length
+                    currentlyPlaying = songs[userSelectionIndex]
+                    playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
+                } else if (rawUserInput[2] === 0x43) { // Right Key (Next song & play)
+                    userSelectionIndex = (userSelectionIndex + 1) % songs.length
+                    currentlyPlaying = songs[userSelectionIndex]
+                    playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
                 }
             }
         }
