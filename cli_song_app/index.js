@@ -19,7 +19,7 @@ function listSongs(songDirectoryPath) {
         console.log(`${prefix}${ind + 1}. ${song}`);
     });
     console.log(`\nPress 'Enter' to play song`)
-    console.log(`Press 'p' or 'P' to play/pause`)
+    console.log(`Press 'p', 'P' or 'Space' to play/pause`)
     console.log(`Press 'Up' or 'Down' arrow to navigate`)
     console.log(`Press 'Ctrl + C' to exit\n`)
     if (!currentlyPlaying) {
@@ -83,7 +83,7 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
     process.stdin.on('data', (rawUserInput) => {
         const key = rawUserInput.toString()
 
-        if (key === 'p' || key === 'P' || rawUserInput[0] === 0x20) {
+        if (key === 'p' || key === 'P' || key === ' ' || rawUserInput[0] === 0x20) {
             togglePlayPause()
         } else if (rawUserInput[0] === 0x03) { // Ctrl+C
             if (currentProcess) {
