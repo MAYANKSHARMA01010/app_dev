@@ -39,7 +39,9 @@ function playSong(songFilePath) {
         currentProcess.kill()
     }
     isPause = false
-    currentProcess = spawn('afplay', [songFilePath])
+    currentProcess = spawn('vlc', ["--intf", "rc", "--play-and-exit", songFilePath], {
+        stdio: "pipe"
+    })
     currentProcess.on('exit', () => {
         currentProcess = null
         currentlyPlaying = null
@@ -54,12 +56,8 @@ function togglePlayPause() {
         currentlyPlaying = songs[userSelectionIndex]
         playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
     } else {
+        currentProcess.stdin.write('pause\n')
         isPause = !isPause
-        if (isPause) {
-            currentProcess.kill('SIGSTOP')
-        } else {
-            currentProcess.kill('SIGCONT')
-        }
     }
 }
 
