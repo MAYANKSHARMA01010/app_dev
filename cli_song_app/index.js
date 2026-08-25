@@ -95,11 +95,13 @@ rl.question('Enter songs path (default ./songs): ', (answer) => {
             currentlyPlaying = songs[userSelectionIndex]
             playSong(SONGS_DIR + "/" + songs[userSelectionIndex])
         } else if (rawUserInput[0] === 0x1b && rawUserInput[1] === 0x5b) {
-            if (rawUserInput[2] === 0x41) { // Up Key
-                userSelectionIndex = Math.max(0, userSelectionIndex - 1)
-            }
-            if (rawUserInput[2] === 0x42) { // Down Key
-                userSelectionIndex = Math.min(songs.length - 1, userSelectionIndex + 1)
+            if (songs && songs.length > 0) {
+                if (rawUserInput[2] === 0x41) { // Up Key (wrap to bottom)
+                    userSelectionIndex = (userSelectionIndex - 1 + songs.length) % songs.length
+                }
+                if (rawUserInput[2] === 0x42) { // Down Key (wrap to top)
+                    userSelectionIndex = (userSelectionIndex + 1) % songs.length
+                }
             }
         }
         listSongs(SONGS_DIR)
