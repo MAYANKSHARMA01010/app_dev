@@ -13,37 +13,45 @@ let time_elapsed = 0
 let total_duration = 0
 let progressInterval = null
 
-// Simple progress bar helper: [=====>-----] 5s / 10s
+// Percentage-based progress bar helper: [=====>-----] 50% (5s / 10s)
 function renderProgressBar(time_elapsed, total_duration) {
     const size = 20
     const ratio = total_duration > 0 ? Math.min(1, time_elapsed / total_duration) : 0
+    const percent = Math.round(ratio * 100)
     const filled = Math.round(size * ratio)
-    const bar = '='.repeat(filled) + '-'.repeat(size - filled)
-    return `[${bar}] ${time_elapsed}s / ${total_duration ? total_duration + 's' : '--'}`
+    const bar = '='.repeat(filled) + (filled < size ? '>' : '') + '-'.repeat(Math.max(0, size - filled - (filled < size ? 1 : 0)))
+    return `[${bar}] ${percent}% (${time_elapsed}s / ${total_duration ? total_duration + 's' : '--'})`
 }
 
-// List Available Songs to User
+// List Available Songs to User with In-Place Terminal Redrawing
 function listSongs(songDirectoryPath) {
-    songs = fs.readdirSync(songDirectoryPath).filter((file) => file.endsWith(".mp3") || file.endsWith(".aiff"))
-    console.clear()
-    console.log(`All Listed Songs`)
+    songs = fs.readdirSync(songDirectoryPath).filter((file) => file.endsWith(".mp3") || file.endsWith(".aiff") || file.endsWith(".wav"))
+    
+    // In-place terminal redraw: move cursor to origin (0, 0) and clear screen downward
+    readline.cursorTo(process.stdout, 0, 0)
+    readline.clearScreenDown(process.stdout)
+
+    process.stdout.write(`=== CLI Music Player ===\n\n`)
+    process.stdout.write(`All Listed Songs:\n`)
     songs.forEach((song, ind) => {
         const prefix = ind === userSelectionIndex ? '> ' : '  ';
-        console.log(`${prefix}${ind + 1}. ${song}`);
+        process.stdout.write(`${prefix}${ind + 1}. ${song}\n`);
     });
-    console.log(`\nPress 'Enter' to play song`)
-    console.log(`Press 'p', 'P' or 'Space' to play/pause`)
-    console.log(`Press 'Up' or 'Down' arrow to navigate`)
-    console.log(`Press 'Left' or 'Right' arrow to change song`)
-    console.log(`Press 'Ctrl + C' to exit\n`)
+    process.stdout.write(`\nControls:\n`)
+    process.stdout.write(`  • [↑ / ↓]   : Navigate song list\n`)
+    process.stdout.write(`  • [Enter]   : Play selected song\n`)
+    process.stdout.write(`  • [Space/P] : Play / Pause\n`)
+    process.stdout.write(`  • [← / →]   : Previous / Next track\n`)
+    process.stdout.write(`  • [Ctrl + C]: Quit\n\n`)
+
     if (!currentlyPlaying) {
-        console.log(`Not Playing Anything`)
+        process.stdout.write(`Status: Not Playing Anything\n`)
     } else if (isPause) {
-        console.log(`Currently Paused: ${currentlyPlaying}`)
-        console.log(renderProgressBar(time_elapsed, total_duration))
+        process.stdout.write(`Status: Currently Paused: ${currentlyPlaying}\n`)
+        process.stdout.write(`Progress: ${renderProgressBar(time_elapsed, total_duration)}\n`)
     } else {
-        console.log(`Currently Playing: ${currentlyPlaying}`)
-        console.log(renderProgressBar(time_elapsed, total_duration))
+        process.stdout.write(`Status: Currently Playing: ${currentlyPlaying}\n`)
+        process.stdout.write(`Progress: ${renderProgressBar(time_elapsed, total_duration)}\n`)
     }
 }
 
