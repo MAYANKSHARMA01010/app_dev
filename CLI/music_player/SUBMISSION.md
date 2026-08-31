@@ -10,59 +10,54 @@
 
 ```mermaid
 flowchart TD
-    subgraph UI_Layer ["1. Terminal & User Input Layer"]
-        A["Terminal Stdin (Raw Mode)"] -->|"Capture keycodes"| B["Input Dispatcher\n(process.stdin.on 'data')"]
-        B -->|"Up (0x41) / Down (0x42)"| C["Update userSelectionIndex"]
-        B -->|"Enter (0x0d)"| D["Invoke playSong()"]
-        B -->|"Space / 'p' / 'P'"| E["Invoke togglePlayPause()"]
-        B -->|"Left (0x44) / Right (0x43)"| F["Quick Skip & Play"]
-        B -->|"Ctrl + C (0x03)"| G["Clean Exit Handler"]
+    subgraph Input_Layer ["1. User Input Layer"]
+        RawInput["⌨️ Raw Terminal Stdin<br/>(Up/Down, Enter, Space, Left/Right, Ctrl+C)"]
     end
 
-    subgraph State_Layer ["2. Application State Manager"]
-        C --> S["State Store\n- userSelectionIndex\n- currentlyPlaying\n- isPause\n- time_elapsed\n- total_duration"]
-        D --> S
-        E --> S
-        F --> S
+    subgraph Core_Layer ["2. Application State & Controller"]
+        Dispatcher["🎮 Action Dispatcher & Key Handler"]
+        StateStore["📊 Application State<br/>• userSelectionIndex<br/>• currentlyPlaying<br/>• isPause<br/>• time_elapsed / total_duration"]
+        Timer["⏱️ 1-Second Playback Timer<br/>(Updates time_elapsed)"]
+        
+        RawInput --> Dispatcher
+        Dispatcher -->|"Update index / state"| StateStore
+        Dispatcher -->|"Start / Stop / Reset"| Timer
+        Timer -->|"Tick time_elapsed"| StateStore
     end
 
-    subgraph Audio_Layer ["3. Subprocess & IPC Controller"]
-        D -->|"spawn('vlc', ['--intf', 'rc', ...])"| H["Audio Subprocess (VLC)"]
-        E -->|"stdin.write('pause\\n')"| H
-        H -->|"stdin.write('get_length\\n')"| H
-        H -->|"stdout data stream"| I["Duration Parser\n(total_duration = parsedLength)"]
-        I --> S
-        G -->|"kill() & clear listeners"| H
+    subgraph Audio_Layer ["3. Subprocess & Audio IPC"]
+        VLC["🎵 VLC Headless Process<br/>(spawn with '--intf rc')"]
+        
+        Dispatcher -->|"stdin.write('pause\n' / 'get_length\n')"| VLC
+        VLC -.->|"stdout: parse duration"| StateStore
     end
 
-    subgraph Timer_Layer ["4. Playback Timer Engine"]
-        D --> J["progressInterval (setInterval 1000ms)"]
-        J -->|"if (!isPause)"| K["time_elapsed += 1"]
-        K --> S
-        G -->|"clearInterval"| J
-    end
-
-    subgraph Render_Layer ["5. In-Place Terminal Renderer"]
-        S -->|"Trigger render"| L["listSongs()"]
-        L -->|"readline.cursorTo(0,0)"| M["Move Cursor to Origin (0,0)"]
-        M -->|"readline.clearScreenDown()"| N["Clear Remaining Buffer"]
-        N --> O["renderProgressBar()\n[=====>-----] 50% (5s/10s)"]
-        O --> P["process.stdout.write()"]
+    subgraph UI_Layer ["4. In-Place Terminal Renderer"]
+        Renderer["🖥️ ANSI Terminal Engine<br/>• readline.cursorTo(0,0)<br/>• readline.clearScreenDown()"]
+        Display["📋 Song List with Active Pointer (>)<br/>📊 Live Percentage Progress Bar [=====>-----]"]
+        
+        StateStore -->|"Trigger redraw"| Renderer
+        Renderer --> Display
     end
 ```
 
 ### Architectural Component Breakdown:
-1. **Raw Stdin Input Handler (`process.stdin.setRawMode(true)`)**:
-   - Bypasses standard line-buffering, capturing every keystroke in real-time as raw hex buffers without requiring the user to press Enter after every action.
-2. **Audio Process Controller (`child_process.spawn`)**:
-   - Manages playback through standard I/O pipes using VLC's headless remote control interface (`--intf rc --play-and-exit`).
-   - Sends non-blocking ASCII commands (`pause\n`, `get_length\n`) via `stdin` and parses asynchronous response events via `stdout`.
-3. **Timer & State Synchronizer (`setInterval`)**:
-   - A 1-second interval increments `time_elapsed` only when `!isPause`. It synchronizes the UI progress bar with audio playback.
-4. **In-Place Terminal Renderer**:
-   - Uses ANSI escape sequences via `readline.cursorTo(process.stdout, 0, 0)` and `readline.clearScreenDown(process.stdout)` to overwrite the terminal screen in-place, eliminating scrolling, flickering, and ghost characters.
-5. **Lifecycle & Resource Cleanup**:
-   - Prevents orphaned processes, audio overlap, and memory leaks by killing previous child processes and clearing active timers on track switch or `Ctrl+C`.
+
+1. **User Input Layer (`process.stdin.setRawMode(true)`)**:
+   - Captures individual keystrokes in real time without waiting for Enter.
+   - Handles navigation (`↑`/`↓`), selection (`Enter`), pause/resume (`Space`/`p`), track skip (`←`/`→`), and graceful termination (`Ctrl+C`).
+
+2. **Application State & Timer Controller**:
+   - Manages track selection pointer bounds (`Math.max(0, ...)` / `Math.min(len - 1, ...)`).
+   - Coordinates the active 1-second interval timer that increments playback elapsed time only when audio is actively playing (`!isPause`).
+
+3. **Audio Subprocess & IPC (`child_process.spawn`)**:
+   - Spawns VLC in headless remote control mode (`--intf rc --play-and-exit`).
+   - Dispatches non-blocking commands through `stdin` (`pause\n`, `get_length\n`) and parses duration/metadata from `stdout` chunks asynchronously.
+
+4. **In-Place Terminal Redraw Engine (`readline` & ANSI Control)**:
+   - Resets cursor position to row 0, column 0 (`readline.cursorTo(process.stdout, 0, 0)`) and clears leftover screen artifacts downward (`readline.clearScreenDown(process.stdout)`).
+   - Renders formatted song lists, playback statuses, and dynamic percentage progress bars smoothly without screen flickering or repeated scrollback.
 
 ---
 
