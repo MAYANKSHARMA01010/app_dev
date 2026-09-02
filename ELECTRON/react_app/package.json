@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "electron": "electron app/index.js",
+    "electron": "electron ./app/index.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
