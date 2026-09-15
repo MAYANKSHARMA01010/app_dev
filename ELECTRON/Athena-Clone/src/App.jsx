@@ -107,6 +107,17 @@ function App() {
         </button>
       </div>
 
+      <div className="bottom-actions">
+        <button
+          className="btn btn-red"
+          onClick={async () => {
+            await window.athena.quitApp();
+          }}
+        >
+          Quit App
+        </button>
+      </div>
+
       <div>
         {timer + ' (s) elapsed'}
       </div>

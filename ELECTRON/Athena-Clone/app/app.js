@@ -3,6 +3,7 @@ import path from "path";
 
 let window = null;
 let startTimestamp = null
+let count = 0
 
 function createWindow() {
     window = new BrowserWindow({
@@ -21,7 +22,15 @@ ipcMain.handle('start-timer', (event) => {
     startTimestamp = Date.now()
     setInterval(() => {
         window.webContents.send('timer', (Date.now() - startTimestamp) / 1000);
+        count += 1
+        if (count === 5) {
+            app.quit()
+        }
     }, 1000);
+})
+
+ipcMain.handle('quit-app', () => {
+    app.quit();
 })
 
 app.whenReady().then(createWindow);
