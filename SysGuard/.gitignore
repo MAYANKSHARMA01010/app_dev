@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Generated reports & logs
+reports/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+*.local
+
+# Tests (ignored from git tracking)
+tests/
+
+# scripts (preserved on disk)
+scripts/
+
+# Windows components (preserved on disk)
+windows/
