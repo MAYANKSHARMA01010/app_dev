@@ -1,0 +1,73 @@
+# ==========================================
+# Root .gitignore for CLI & ELECTRON projects
+# ==========================================
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Production & Build outputs
+dist/
+dist-ssr/
+build/
+out/
+release/
+package/
+
+# Electron packaging & installers
+*.dmg
+*.exe
+*.zip
+*.deb
+*.rpm
+*.AppImage
+
+# App-specific generated artifacts (e.g. Athena-Clone user snapshots)
+user-camera-snap/
+**/user-camera-snap/
+
+# Logs & debuggers
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment & local configurations
+.env
+.env.*
+!.env.example
+*.local
+
+# Tests and coverage
+coverage/
+.nyc_output/
+
+# Editor & IDE directories
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Cache directories
+.eslintcache
+.cache/
+.parcel-cache/
+
+# Ignore session data
+**/backend/data/sessions.json
+**/sessions.json

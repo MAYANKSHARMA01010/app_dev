@@ -18,7 +18,7 @@ function createWindow() {
     electronWindow.loadURL('http://localhost:5173')
 }
 
-ipcMain.handle('start-timer', (event) => {
+ipcMain.handle('start-timer', (_event) => {
     startTimestamp = Date.now();
 
     // Send Timer Tick every 1s

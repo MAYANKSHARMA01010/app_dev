@@ -4,7 +4,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld("athena", {
     registerListenerForTimerTickFromMain: (callback) => {
         // callback is setTimer
-        const fn = (event, message) => {
+        const fn = (_event, message) => {
             callback(message);
         }
 
@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld("athena", {
     startTimerOnMain: () => {
         try {
             return ipcRenderer.invoke('start-timer');
-        } catch (error) {
+        } catch (_error) {
             throw "error";
         }
     },
