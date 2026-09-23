@@ -24,7 +24,9 @@ package/
 
 # App-specific generated artifacts (e.g. Athena-Clone user snapshots)
 user-camera-snap/
+user-screen-snap/
 **/user-camera-snap/
+**/user-screen-snap/
 
 # Logs & debuggers
 logs/

@@ -3,17 +3,17 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld("athena", {
     registerListenerForTimerTickFromMain: (callback) => {
-        // callback is setTimer
         const fn = (_event, message) => {
             callback(message);
-        }
+        };
 
         ipcRenderer.on('timer', fn);
 
         return () => {
             ipcRenderer.removeListener('timer', fn);
-        }
+        };
     },
+
     startTimerOnMain: () => {
         try {
             return ipcRenderer.invoke('start-timer');
@@ -22,7 +22,13 @@ contextBridge.exposeInMainWorld("athena", {
         }
     },
 
-    // New Preload Functions
+    stopTimerOnMain: () => {
+        try {
+            return ipcRenderer.invoke('stop-timer');
+        } catch (_error) {
+            throw "error";
+        }
+    },
 
     // Functions related to capturing camera snaps of user
     registerListenerForCameraSnapFromMain: (callback) => {
@@ -30,15 +36,32 @@ contextBridge.exposeInMainWorld("athena", {
 
         return () => {
             ipcRenderer.removeListener('camera-shot', callback);
-        }
+        };
     },
 
     storeCameraSnapImageOnDisk: (data) => {
-        ipcRenderer.invoke('store-camera-snap-image-on-disk', data);
+        return ipcRenderer.invoke('store-camera-snap-image-on-disk', data);
+    },
+
+    // Functions related to capturing screen shots of OS screen
+    registerListenerForScreenSnapFromMain: (callback) => {
+        ipcRenderer.on('screen-shot', callback);
+
+        return () => {
+            ipcRenderer.removeListener('screen-shot', callback);
+        };
+    },
+
+    storeScreenSnapImageOnDisk: (data) => {
+        return ipcRenderer.invoke('store-screen-snap-image-on-disk', data);
+    },
+
+    captureScreenNow: () => {
+        return ipcRenderer.invoke('capture-screen-now');
     },
 
     // Functions related to showing Contest Rules in a new Dialog
     showRules: () => {
         ipcRenderer.send("show-rules");
     }
-})
+});

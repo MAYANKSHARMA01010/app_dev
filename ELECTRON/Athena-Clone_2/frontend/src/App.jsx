@@ -139,6 +139,8 @@ function App() {
       const res = await api.submitExam(sessionId);
       setFinalResult(res.result);
 
+      window.athena?.stopTimerOnMain?.();
+
       const session = await api.getSession(sessionId);
       setSessionProgress(session);
 
