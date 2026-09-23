@@ -23,6 +23,10 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
+# Pre-flight: ensure ports 3000 and 5173 are free
+echo -e "${YELLOW}Preparing ports 3000 and 5173...${NC}"
+lsof -ti:3000,5173 | xargs kill -9 2>/dev/null || true
+
 echo -e "${YELLOW}Starting Athena Exam App (Backend + Frontend + Electron)...${NC}\n"
 
 # 1. Start Backend
@@ -30,9 +34,9 @@ echo -e "${CYAN}[Backend] Starting server on http://localhost:3000...${NC}"
 (cd "$DIR/backend" && node server.js) &
 BACKEND_PID=$!
 
-# 2. Start Frontend
+# 2. Start Frontend with strict port 5173
 echo -e "${GREEN}[Frontend] Starting Vite on http://localhost:5173...${NC}"
-(cd "$DIR/frontend" && pnpm dev --port 5173) &
+(cd "$DIR/frontend" && pnpm dev --port 5173 --strictPort) &
 FRONTEND_PID=$!
 
 # 3. Wait for servers to respond

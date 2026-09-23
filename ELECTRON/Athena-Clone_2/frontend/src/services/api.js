@@ -7,7 +7,7 @@ const client = axios.create({
   },
 });
 
-// Response interceptor to return data directly and format error messages
+// Response interceptor to unwrap data and standardize error messages
 client.interceptors.response.use(
   (response) => response.data,
   (error) => {
