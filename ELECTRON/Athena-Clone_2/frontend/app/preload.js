@@ -30,6 +30,22 @@ contextBridge.exposeInMainWorld("athena", {
         }
     },
 
+    enterFullScreen: () => {
+        return ipcRenderer.invoke('enter-fullscreen');
+    },
+
+    exitFullScreen: () => {
+        return ipcRenderer.invoke('exit-fullscreen');
+    },
+
+    registerListenerForBlurWarning: (callback) => {
+        const fn = () => callback();
+        ipcRenderer.on('blur-warning', fn);
+        return () => {
+            ipcRenderer.removeListener('blur-warning', fn);
+        };
+    },
+
     // Functions related to capturing camera snaps of user
     registerListenerForCameraSnapFromMain: (callback) => {
         ipcRenderer.on('camera-shot', callback);

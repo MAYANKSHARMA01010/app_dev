@@ -10,6 +10,8 @@ export default function QuestionPalette({
   hasSelection,
   loading,
 }) {
+  const isLastQuestion = currentIndex === questions.length - 1;
+
   return (
     <div className="exam-footer">
       <button
@@ -28,29 +30,39 @@ export default function QuestionPalette({
               submittedAnswers[q.id] ? 'answered' : ''
             }`}
             onClick={() => onSelectQuestion(i)}
+            title={`Question ${i + 1}`}
           >
             {i + 1}
           </button>
         ))}
       </div>
 
-      {!isCurrentAnswered ? (
-        <button
-          className="btn btn-action-primary"
-          disabled={!hasSelection || loading}
-          onClick={onSubmitAnswer}
-        >
-          {loading ? 'Saving...' : 'Submit Answer'}
-        </button>
-      ) : (
-        <button
-          className="btn btn-secondary"
-          disabled={currentIndex === questions.length - 1}
-          onClick={onNext}
-        >
-          Next
-        </button>
-      )}
+      <div className="footer-right-actions">
+        {hasSelection && (
+          <button
+            className="btn btn-action-primary"
+            disabled={loading}
+            onClick={onSubmitAnswer}
+          >
+            {loading
+              ? 'Saving...'
+              : isCurrentAnswered
+              ? 'Update Answer'
+              : isLastQuestion
+              ? 'Save Answer'
+              : 'Save & Next'}
+          </button>
+        )}
+
+        {!isLastQuestion && (
+          <button
+            className="btn btn-secondary"
+            onClick={onNext}
+          >
+            Next
+          </button>
+        )}
+      </div>
     </div>
   );
 }

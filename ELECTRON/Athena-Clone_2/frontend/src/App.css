@@ -283,22 +283,26 @@ body {
 }
 
 /* ================= 2. EXAM SCREEN ================= */
+.exam-screen-container {
+  width: 100%;
+}
+
 .exam-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
-  padding: 12px 20px;
+  padding: 16px 24px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .exam-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-badge {
@@ -306,16 +310,17 @@ body {
   font-weight: 700;
   color: #2563eb;
   background: #eff6ff;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 6px;
+  letter-spacing: -0.1px;
 }
 
 .candidate-pill {
   font-size: 13px;
   font-weight: 600;
-  color: #4b5563;
+  color: #374151;
   background: #f3f4f6;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 6px;
 }
 
@@ -324,63 +329,70 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: #111827;
-  background: #f3f4f6;
-  padding: 6px 12px;
-  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 5px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
 }
 
 .exam-right-panel {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.exam-proctor-pip {
-  position: relative;
-  width: 80px;
-  height: 52px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 2px solid #2563eb;
-  background: #000000;
-  flex-shrink: 0;
+.attempted-counter {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
 }
 
-.exam-pip-feed {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
+.attempted-counter strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.btn-rules {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.exam-paper-card {
+  padding: 36px 40px;
 }
 
 .question-top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .q-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   color: #6b7280;
 }
 
 .saved-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: #2563eb;
-  background: #eff6ff;
-  padding: 4px 10px;
-  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
 
 .q-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #111827;
   line-height: 1.45;
@@ -392,48 +404,50 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 8px;
 }
 
 .option-btn {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   padding: 14px 18px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
   background: #ffffff;
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
+  user-select: none;
+  position: relative;
 }
 
-.option-btn:hover:not(.locked) {
-  border-color: #93c5fd;
-  background: #f9fafb;
+.option-btn:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .option-btn.selected {
   border-color: #2563eb;
   background: #eff6ff;
-}
-
-.option-btn.locked {
-  cursor: default;
+  box-shadow: 0 0 0 1px #2563eb;
 }
 
 .option-letter {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   border: 1.5px solid #d1d5db;
+  background: #f9fafb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #4b5563;
   flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .option-btn.selected .option-letter {
@@ -447,40 +461,55 @@ body {
   font-weight: 500;
   color: #1f2937;
   text-align: left;
+  flex: 1;
+}
+
+.option-check {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2563eb;
+  margin-left: auto;
 }
 
 .exam-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .palette-row {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .palette-chip {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
   background: #ffffff;
   font-size: 13px;
   font-weight: 700;
   color: #4b5563;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .palette-chip:hover {
-  background: #f3f4f6;
+  border-color: #93c5fd;
+  background: #f0f9ff;
 }
 
 .palette-chip.active {
   border-color: #2563eb;
   color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  font-weight: 800;
 }
 
 .palette-chip.answered {
@@ -489,35 +518,69 @@ body {
   color: #ffffff;
 }
 
+.footer-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .btn-secondary {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1.5px solid #e5e7eb;
   color: #111827;
   padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: #f9fafb;
+  border-color: #d1d5db;
 }
 
 .btn-action-primary {
   background: #2563eb;
   color: #ffffff;
   padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
 }
 
 .btn-action-primary:hover:not(:disabled) {
   background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.exam-finish-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .btn-finish {
   background: #dc2626;
   color: #ffffff;
-  padding: 10px 20px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
 }
 
 .btn-finish:hover:not(:disabled) {
   background: #b91c1c;
+  transform: translateY(-1px);
 }
 
 /* ================= 3. RESULTS SCREEN ================= */

@@ -7,7 +7,7 @@ export default function QuestionCard({
   onSelectOption,
 }) {
   return (
-    <>
+    <div className="question-content-wrapper">
       <div className="question-top-bar">
         <span className="q-label">
           Question {currentIndex + 1} of {totalQuestions}
@@ -23,21 +23,18 @@ export default function QuestionCard({
           return (
             <div
               key={idx}
-              className={`option-btn ${isSelected ? 'selected' : ''} ${
-                isAnswered ? 'locked' : ''
-              }`}
-              onClick={() => {
-                if (!isAnswered) {
-                  onSelectOption(question.id, idx);
-                }
-              }}
+              className={`option-btn ${isSelected ? 'selected' : ''}`}
+              onClick={() => onSelectOption(idx)}
+              role="button"
+              tabIndex={0}
             >
               <div className="option-letter">{String.fromCharCode(65 + idx)}</div>
               <div className="option-label">{option}</div>
+              {isSelected && <span className="option-check">✓</span>}
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

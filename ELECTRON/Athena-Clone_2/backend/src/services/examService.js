@@ -82,30 +82,34 @@ const examService = {
       throw err;
     }
 
-    const alreadyAnswered = session.answers.find(
-      (answer) => answer.questionId === Number(questionId)
-    );
-    if (alreadyAnswered) {
-      const err = new Error('Question already answered');
-      err.status = 400;
-      throw err;
-    }
-
     const isCorrect = Number(selectedAnswer) === question.correctAnswer;
 
-    session.answers.push({
-      questionId: question.id,
-      selectedAnswer: Number(selectedAnswer),
-      isCorrect,
-      answeredAt: new Date().toISOString(),
-    });
+    const existingIndex = session.answers.findIndex(
+      (answer) => answer.questionId === Number(questionId)
+    );
 
-    session.attempted += 1;
-    if (isCorrect) {
-      session.correct += 1;
+    if (existingIndex >= 0) {
+      // Update previously submitted answer
+      session.answers[existingIndex] = {
+        questionId: question.id,
+        selectedAnswer: Number(selectedAnswer),
+        isCorrect,
+        answeredAt: new Date().toISOString(),
+      };
     } else {
-      session.wrong += 1;
+      // Record new answer
+      session.answers.push({
+        questionId: question.id,
+        selectedAnswer: Number(selectedAnswer),
+        isCorrect,
+        answeredAt: new Date().toISOString(),
+      });
     }
+
+    // Recalculate metrics
+    session.attempted = session.answers.length;
+    session.correct = session.answers.filter((a) => a.isCorrect).length;
+    session.wrong = session.attempted - session.correct;
 
     saveSessions(sessions);
 

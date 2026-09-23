@@ -5,7 +5,6 @@ export default function ExamHeader({
   attemptedCount,
   totalQuestions,
   onShowRules,
-  mediaStream,
 }) {
   return (
     <div className="exam-header">
@@ -17,29 +16,15 @@ export default function ExamHeader({
         <span className="timer-box">⏱️ {timerDisplay}</span>
       </div>
       <div className="exam-right-panel">
-        <span style={{ fontSize: '13px', fontWeight: 600, color: '#4b5563' }}>
-          Attempted: {attemptedCount} / {totalQuestions}
+        <span className="attempted-counter">
+          Attempted: <strong>{attemptedCount}</strong> / {totalQuestions}
         </span>
         <button
-          className="btn btn-secondary"
-          style={{ padding: '6px 12px', fontSize: '12px' }}
+          className="btn btn-secondary btn-rules"
           onClick={onShowRules}
         >
-          Rules
+          Exam Rules
         </button>
-        <div className="exam-proctor-pip" title="Live proctoring active">
-          <video
-            ref={(el) => {
-              if (el && mediaStream && el.srcObject !== mediaStream) {
-                el.srcObject = mediaStream;
-              }
-            }}
-            autoPlay
-            playsInline
-            muted
-            className="exam-pip-feed"
-          />
-        </div>
       </div>
     </div>
   );

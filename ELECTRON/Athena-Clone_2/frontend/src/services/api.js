@@ -26,3 +26,5 @@ export const api = {
   getSession: (sessionId) => client.get(`/exam/session/${sessionId}`),
   submitExam: (sessionId) => client.post('/exam/submit', { sessionId }),
 };
+
+export default api;

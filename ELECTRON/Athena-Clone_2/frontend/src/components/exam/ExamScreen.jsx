@@ -17,17 +17,21 @@ export default function ExamScreen({
   onSubmitAnswer,
   onSubmitExam,
   onShowRules,
-  mediaStream,
   loading,
 }) {
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
 
   const isCurrentAnswered = !!submittedAnswers[currentQ.id];
-  const hasSelection = selectedAnswers[currentQ.id] !== undefined;
+  const activeSelection =
+    selectedAnswers[currentQ.id] !== undefined
+      ? selectedAnswers[currentQ.id]
+      : submittedAnswers[currentQ.id]?.selectedOption;
+
+  const hasSelection = activeSelection !== undefined;
 
   return (
-    <>
+    <div className="exam-screen-container">
       <ExamHeader
         userName={userName}
         userId={userId}
@@ -35,18 +39,19 @@ export default function ExamScreen({
         attemptedCount={Object.keys(submittedAnswers).length}
         totalQuestions={questions.length}
         onShowRules={onShowRules}
-        mediaStream={mediaStream}
       />
 
-      <div className="card-container">
+      <div className="card-container exam-paper-card">
         <QuestionCard
           question={currentQ}
           currentIndex={currentIndex}
           totalQuestions={questions.length}
           isAnswered={isCurrentAnswered}
-          selectedAnswer={selectedAnswers[currentQ.id]}
+          selectedAnswer={activeSelection}
           onSelectOption={onSelectOption}
         />
+
+        <div className="divider" style={{ margin: '24px 0 20px 0' }} />
 
         <QuestionPalette
           questions={questions}
@@ -62,7 +67,7 @@ export default function ExamScreen({
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="exam-finish-bar">
         <button
           className="btn btn-finish"
           onClick={onSubmitExam}
@@ -71,6 +76,6 @@ export default function ExamScreen({
           {loading ? 'Submitting...' : 'Finish & Submit Exam'}
         </button>
       </div>
-    </>
+    </div>
   );
 }

@@ -9,7 +9,8 @@ export default function SetupScreen({
   onGetCameraAccess,
   fullScreen,
   onEnableFullScreen,
-  videoRef,
+  attachStreamToVideo,
+  detachVideo,
   onStartExam,
   onShowRules,
   loading,
@@ -64,7 +65,10 @@ export default function SetupScreen({
               {cameraEnabled && (
                 <div className="camera-badge-container">
                   <video
-                    ref={videoRef}
+                    ref={(el) => {
+                      if (el) attachStreamToVideo?.(el);
+                      else detachVideo?.(el);
+                    }}
                     autoPlay
                     playsInline
                     muted

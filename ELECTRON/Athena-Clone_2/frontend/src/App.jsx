@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import './App.css';
-import { api } from './services/api';
+import api from './services/api';
 import { useCamera } from './hooks/useCamera';
 import { useProctoring } from './hooks/useProctoring';
 import SetupScreen from './components/setup/SetupScreen';
 import ExamScreen from './components/exam/ExamScreen';
 import ResultsScreen from './components/results/ResultsScreen';
+import './App.css';
 
 function App() {
-  const [stage, setStage] = useState('setup');
+  const [stage, setStage] = useState('setup'); // 'setup' | 'exam' | 'result'
 
-  // Candidate information
+  // Candidate credentials
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
 
@@ -19,10 +19,21 @@ function App() {
   const [error, setError] = useState(null);
 
   // Custom hardware & desktop hooks
-  const { cameraEnabled, mediaStream, mediaStreamRef, videoRef, getCameraAccess } =
-    useCamera(setError);
-  const { timer, fullScreen, enableFullScreen, showRules, formatTime } =
-    useProctoring(mediaStreamRef, setError);
+  const {
+    cameraEnabled,
+    mediaStreamRef,
+    attachStreamToVideo,
+    detachVideo,
+    getCameraAccess,
+  } = useCamera(setError);
+
+  const {
+    timer,
+    fullScreen,
+    enableFullScreen,
+    showRules,
+    formatTime,
+  } = useProctoring(mediaStreamRef, setError);
 
   // Exam session data
   const [sessionId, setSessionId] = useState(null);
@@ -58,6 +69,7 @@ function App() {
       setSubmittedAnswers({});
       setStage('exam');
 
+      // Start Proctoring Timers and Captures
       window.athena?.startTimerOnMain?.();
     } catch (err) {
       setError(err.message || 'Failed to start exam. Ensure backend is running.');
@@ -82,21 +94,28 @@ function App() {
     }
   }
 
-  // 3. Option Selection
-  function handleSelectOption(questionId, optionIndex) {
+  // 3. Select Option (A, B, C, D)
+  function handleSelectOption(opt) {
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return;
     setSelectedAnswers((prev) => ({
       ...prev,
-      [questionId]: optionIndex,
+      [currentQ.id]: opt,
     }));
   }
 
-  // 4. Submit Answer for Active Question
+  // 4. Submit Answer for current question
   async function handleSubmitAnswer() {
     const currentQ = questions[currentIndex];
-    const selectedOption = selectedAnswers[currentQ.id];
+    if (!currentQ) return;
 
-    if (selectedOption === undefined) {
-      setError('Please select an option first.');
+    const chosenOption =
+      selectedAnswers[currentQ.id] !== undefined
+        ? selectedAnswers[currentQ.id]
+        : submittedAnswers[currentQ.id]?.selectedOption;
+
+    if (chosenOption === undefined) {
+      setError('Please select an option before saving.');
       return;
     }
 
@@ -104,12 +123,14 @@ function App() {
     setError(null);
 
     try {
-      const res = await api.submitAnswer(sessionId, currentQ.id, selectedOption);
+      const answerRes = await api.submitAnswer(sessionId, currentQ.id, chosenOption);
+
       setSubmittedAnswers((prev) => ({
         ...prev,
         [currentQ.id]: {
-          selectedAnswer: selectedOption,
-          isCorrect: res.isCorrect,
+          selectedOption: chosenOption,
+          isCorrect: answerRes.isCorrect,
+          correctAnswer: answerRes.correctAnswer,
         },
       }));
 
@@ -152,7 +173,7 @@ function App() {
     }
   }
 
-  // 6. Retake Exam
+  // 6. Retake Exam (Give another paper)
   function handleRetake() {
     setStage('setup');
     setSessionId(null);
@@ -167,10 +188,26 @@ function App() {
 
   return (
     <div className="page-container">
-      {/* Hidden background video to keep stream connected before camera UI shows */}
-      {!cameraEnabled && (
-        <video ref={videoRef} autoPlay playsInline muted className="hidden-video" />
-      )}
+      {/* Persistent hidden background video ensuring camera stream stays alive across all stages */}
+      <video
+        ref={(el) => {
+          if (el) attachStreamToVideo(el);
+          else detachVideo(el);
+        }}
+        autoPlay
+        playsInline
+        muted
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: -9999,
+          left: -9999,
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+      />
 
       {error && <div className="error-banner">{error}</div>}
 
@@ -184,7 +221,8 @@ function App() {
           onGetCameraAccess={getCameraAccess}
           fullScreen={fullScreen}
           onEnableFullScreen={enableFullScreen}
-          videoRef={videoRef}
+          attachStreamToVideo={attachStreamToVideo}
+          detachVideo={detachVideo}
           onStartExam={handleStartExam}
           onShowRules={showRules}
           loading={loading}
@@ -207,7 +245,6 @@ function App() {
           onSubmitAnswer={handleSubmitAnswer}
           onSubmitExam={handleSubmitExam}
           onShowRules={showRules}
-          mediaStream={mediaStream}
           loading={loading}
         />
       )}
