@@ -1,14 +1,40 @@
 {
   "name": "athena5",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "app/app.js",
+  "author": "Mayank Sharma",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron": "electron ./app/app.js"
+    "electron": "electron ./app/app.js",
+    "dist": "pnpm run build && electron-builder",
+    "pack": "pnpm run build && electron-builder --dir"
+  },
+  "build": {
+    "appId": "in.mayank.athenaclone",
+    "productName": "Athena",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "app/**/*"
+    ],
+    "mac": {
+      "target": "dmg",
+      "identity": null,
+      "category": "public.app-category.education"
+    },
+    "dmg": {
+      "window": {
+        "width": 600,
+        "height": 400
+      }
+    }
   },
   "dependencies": {
     "axios": "^1.20.0",
@@ -21,6 +47,7 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",

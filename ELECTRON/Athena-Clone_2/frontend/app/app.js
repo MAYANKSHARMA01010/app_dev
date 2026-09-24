@@ -121,7 +121,11 @@ function createWindow() {
         }
     });
 
-    electronWindow.loadURL('http://localhost:5173');
+    if (app.isPackaged) {
+        electronWindow.loadFile(path.join(import.meta.dirname, '../dist/index.html'));
+    } else {
+        electronWindow.loadURL('http://localhost:5173');
+    }
 
     // Intercept and prevent macOS trackpad swipe navigation
     electronWindow.on('swipe', (event) => {
