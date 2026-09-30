@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - react-native-safe-area-context@5.10.1
