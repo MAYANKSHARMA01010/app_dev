@@ -7,33 +7,37 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app requires access to your camera to take and send photos in chat.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select and send photos in chat.",
+        "NSPhotoLibraryAddUsageDescription": "This app requires permission to save photos to your library."
+      }
     },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you share them with your friends.",
-          "colors": {
-            "cropToolbarColor": "#000000"
-          },
-          "dark": {
-            "colors": {
-              "cropToolbarColor": "#000000"
-            }
-          }
-        }
-      ],
-      "expo-font"
-    ],
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "This app requires access to your photo library to select and send photos in chat.",
+          "cameraPermission": "This app requires access to your camera to take and send photos in chat."
+        }
+      ],
+      "expo-font"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }

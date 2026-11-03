@@ -1,10 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-<<<<<<< HEAD
 import { IsMongoId, IsString, IsOptional } from 'class-validator';
-=======
-import { IsMongoId, IsString, IsOptional, MinLength, ValidateIf } from 'class-validator';
 import { FileResponseDto } from '../../file/dto/file.dto';
->>>>>>> 09c4cd3 (remote url)
 
 // ─── Query DTO ────────────────────────────────────────────────────────────────
 
@@ -38,27 +34,16 @@ export class CreateMessageDto {
   conversation_id: string;
 
   @ApiPropertyOptional({
-<<<<<<< HEAD
-    description: 'Text content of the message (optional if imageInfo is provided)',
-=======
     description:
-      'Text content of the message. Required for text messages; optional (a caption) when file_id is given.',
->>>>>>> 09c4cd3 (remote url)
+      'Text content of the message. Optional if imageInfo or file_id is provided.',
     example: 'Hey, are we meeting tomorrow?',
   })
-<<<<<<< HEAD
   @IsOptional()
   @IsString()
-=======
-  @ValidateIf((o) => o.file_id === undefined || o.content !== undefined)
-  @IsString()
-  @MinLength(1)
->>>>>>> 09c4cd3 (remote url)
   content?: string;
 
   @ApiPropertyOptional({
     description:
-<<<<<<< HEAD
       'Base64 data URI of an image (e.g. data:image/jpeg;base64,...). ' +
       'If raw Base64 is sent without the data: prefix, the backend auto-prepends data:image/jpeg;base64,.',
     example: 'data:image/png;base64,iVBORw0KGgo...',
@@ -66,14 +51,15 @@ export class CreateMessageDto {
   @IsOptional()
   @IsString()
   imageInfo?: string;
-=======
+
+  @ApiPropertyOptional({
+    description:
       'ObjectId of an image or file uploaded with POST /file. It must have been uploaded by the sender.',
     example: '64b8f9e2c4a3b12d4e5f9001',
   })
   @IsOptional()
   @IsMongoId()
   file_id?: string;
->>>>>>> 09c4cd3 (remote url)
 }
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────
@@ -85,13 +71,8 @@ export class MessageResponseDto {
   })
   id: string;
 
-<<<<<<< HEAD
   @ApiPropertyOptional({
-    description: 'Text content of the message (null for image-only messages)',
-=======
-  @ApiProperty({
-    description: 'Text content of the message (empty string for an attachment sent without a caption)',
->>>>>>> 09c4cd3 (remote url)
+    description: 'Text content of the message',
     example: 'Hey, are we meeting tomorrow?',
   })
   content?: string | null;

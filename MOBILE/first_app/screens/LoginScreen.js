@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -122,7 +123,7 @@ export default function LoginScreen() {
           </View>
 
           <Text style={styles.hint}>
-            Connected to http://10.7.1.51:3000
+            Backend: {api.getBaseUrl()}
           </Text>
         </View>
       </KeyboardAvoidingView>

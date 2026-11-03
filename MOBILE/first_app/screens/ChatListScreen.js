@@ -104,7 +104,11 @@ export default function ChatListScreen({ navigation }) {
           return {
             ...conv,
             displayName,
-            lastMessageText: lastMessage ? lastMessage.content : 'No messages yet',
+            lastMessageText: lastMessage
+              ? (lastMessage.imageInfo
+                  ? (lastMessage.content ? `📷 ${lastMessage.content}` : '📷 Photo')
+                  : (lastMessage.content || 'No messages yet'))
+              : 'No messages yet',
             lastMessageTime: lastMessage
               ? formatTime(lastMessage.createdAt)
               : formatTime(conv.createdAt),

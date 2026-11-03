@@ -1,27 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-<<<<<<< HEAD
-import { json, urlencoded } from 'express';
-=======
 import { NestExpressApplication } from '@nestjs/platform-express';
->>>>>>> 09c4cd3 (remote url)
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { JSON_BODY_LIMIT } from './common/base64.util';
 
 async function bootstrap() {
-<<<<<<< HEAD
-  const app = await NestFactory.create(AppModule, { bodyParser: false });
-
-  // Allow large JSON payloads (Base64 images)
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ extended: true, limit: '10mb' }));
-=======
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Files are uploaded as base64 inside JSON, so allow bodies larger than the 100 kb default
-  app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
->>>>>>> 09c4cd3 (remote url)
+  // Enable CORS for mobile app and web clients
+  app.enableCors();
+
+  // Allow large JSON payloads (Base64 images)
+  app.use(json({ limit: JSON_BODY_LIMIT }));
+  app.use(urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
 
   // Global validation pipe — transforms payloads to DTO instances
   app.useGlobalPipes(
@@ -62,8 +55,8 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  console.log(`Application running on http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application running on http://0.0.0.0:${port}`);
   console.log(`Swagger UI available at http://localhost:${port}/docs`);
 }
 bootstrap();

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-=======
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
->>>>>>> 09c4cd3 (remote url)
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMessageDto } from './dto/message.dto';
 import { colorizeName } from '../common/color.util';
@@ -67,11 +63,11 @@ export class MessageService {
    * Logs interactive message detail with deterministic ANSI user colors.
    */
   async createMessage(dto: CreateMessageDto, senderId: string) {
-<<<<<<< HEAD
-    // Must have at least content or imageInfo
-    if (!dto.content && !dto.imageInfo) {
-      throw new BadRequestException('Message must contain content or imageInfo');
-=======
+    // Must have at least content, imageInfo, or file_id
+    if (!dto.content?.trim() && !dto.imageInfo && !dto.file_id) {
+      throw new BadRequestException('Message must contain content, imageInfo, or file_id');
+    }
+
     // An attachment must exist and belong to the sender
     if (dto.file_id) {
       const file = await this.prisma.file.findUnique({
@@ -84,7 +80,6 @@ export class MessageService {
       if (file.uploadedBy !== senderId) {
         throw new ForbiddenException('You can only send files you uploaded');
       }
->>>>>>> 09c4cd3 (remote url)
     }
 
     const conversation = await this.prisma.conversation.findUnique({
@@ -119,12 +114,8 @@ export class MessageService {
 
     const message = await this.prisma.message.create({
       data: {
-<<<<<<< HEAD
-        content: dto.content ?? null,
-        imageInfo: normalizedImageInfo,
-=======
         content: dto.content ?? '',
->>>>>>> 09c4cd3 (remote url)
+        imageInfo: normalizedImageInfo,
         senderId,
         conversationId: dto.conversation_id,
         status: defaultStatus,
@@ -156,20 +147,14 @@ export class MessageService {
         ? receiverUsers.map((u) => colorizeName(u.name)).join(', ')
         : 'None';
 
-<<<<<<< HEAD
-    // Guard: log [IMG] tag instead of raw Base64 to protect terminal
-    const contentLabel = normalizedImageInfo
-      ? (dto.content ? `\x1b[37m${dto.content}\x1b[0m + \x1b[35m[IMG]\x1b[0m` : '\x1b[35m[IMG]\x1b[0m')
-      : `\x1b[37m${dto.content}\x1b[0m`;
+    const attachmentLabel = response.file
+      ? `[${response.file.kind} ${response.file.name}] `
+      : (normalizedImageInfo ? `\x1b[35m[IMG]\x1b[0m ` : '');
+
+    const contentLabel = response.content ? `"\x1b[37m${response.content}\x1b[0m"` : '';
 
     this.logger.log(
-      `\x1b[36m[MSG]\x1b[0m \x1b[1m${convLabel}\x1b[0m │ ${coloredSender} \x1b[33m➔\x1b[0m ${coloredReceivers} │ "${contentLabel}"`,
-=======
-    const attachmentLabel = response.file ? `[${response.file.kind} ${response.file.name}] ` : '';
-
-    this.logger.log(
-      `\x1b[36m[MSG]\x1b[0m \x1b[1m${convLabel}\x1b[0m │ ${coloredSender} \x1b[33m➔\x1b[0m ${coloredReceivers} │ ${attachmentLabel}"\x1b[37m${response.content}\x1b[0m"`,
->>>>>>> 09c4cd3 (remote url)
+      `\x1b[36m[MSG]\x1b[0m \x1b[1m${convLabel}\x1b[0m │ ${coloredSender} \x1b[33m➔\x1b[0m ${coloredReceivers} │ ${attachmentLabel}${contentLabel}`,
     );
 
     return response;
@@ -179,7 +164,7 @@ export class MessageService {
    * Adds `type` (TEXT / IMAGE / FILE) and the attachment's metadata to each message.
    * File contents are not included; clients fetch them with GET /file/{id}.
    */
-  private async withAttachments<T extends { fileId?: string | null }>(messages: T[]) {
+  private async withAttachments<T extends { fileId?: string | null; imageInfo?: string | null }>(messages: T[]) {
     const fileIds = [...new Set(messages.map((m) => m.fileId).filter(Boolean))] as string[];
 
     const files = fileIds.length
@@ -189,10 +174,16 @@ export class MessageService {
 
     return messages.map((message) => {
       const file = message.fileId ? filesById.get(message.fileId) ?? null : null;
+      let type: 'TEXT' | 'IMAGE' | 'FILE' = 'TEXT';
+      if (file) {
+        type = file.kind as 'IMAGE' | 'FILE';
+      } else if (message.imageInfo) {
+        type = 'IMAGE';
+      }
       return {
         ...message,
         fileId: message.fileId ?? null,
-        type: (file ? file.kind : 'TEXT') as 'TEXT' | 'IMAGE' | 'FILE',
+        type,
         file,
       };
     });

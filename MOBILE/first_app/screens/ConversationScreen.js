@@ -10,9 +10,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
+  Modal,
+  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import {
+  pickImageFromLibrary,
+  takePhotoWithCamera,
+  AttachmentOptionsModal,
+  ImagePreviewModal,
+} from '../components/ImagePicker';
 
 export default function ConversationScreen({ route, navigation }) {
   const { conversationId, userName, type } = route.params;
@@ -25,6 +35,13 @@ export default function ConversationScreen({ route, navigation }) {
   const [nextCursor, setNextCursor] = useState(null);
   const [sending, setSending] = useState(false);
   const [usersMap, setUsersMap] = useState({});
+
+  // WhatsApp-style Image Sharing states
+  const [showAttachModal, setShowAttachModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [sendingImage, setSendingImage] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const flatListRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -149,6 +166,51 @@ export default function ConversationScreen({ route, navigation }) {
     }
   };
 
+  const handleOpenGallery = async () => {
+    const res = await pickImageFromLibrary();
+    if (res) {
+      setSelectedImage(res);
+      setShowPreviewModal(true);
+    }
+  };
+
+  const handleOpenCamera = async () => {
+    const res = await takePhotoWithCamera();
+    if (res) {
+      setSelectedImage(res);
+      setShowPreviewModal(true);
+    }
+  };
+
+  const handleSendImage = async (caption) => {
+    if (!selectedImage?.base64) return;
+    setSendingImage(true);
+
+    try {
+      const sentMsg = await api.sendMessage(
+        credentials,
+        conversationId,
+        caption || '',
+        selectedImage.base64
+      );
+      if (isMountedRef.current && sentMsg) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === sentMsg.id)) return prev;
+          return [...prev, sentMsg];
+        });
+        setShowPreviewModal(false);
+        setSelectedImage(null);
+      }
+    } catch (err) {
+      console.log('Error sending image:', err);
+      Alert.alert('Error', 'Failed to send image. Please try again.');
+    } finally {
+      if (isMountedRef.current) {
+        setSendingImage(false);
+      }
+    }
+  };
+
   const formatMessageTime = (isoString) => {
     if (!isoString) return '';
     try {
@@ -162,6 +224,7 @@ export default function ConversationScreen({ route, navigation }) {
   const renderMessageItem = ({ item }) => {
     const isMine = item.senderId === currentUser?.id;
     const senderName = usersMap[item.senderId] || 'User';
+    const hasImage = Boolean(item.imageInfo);
 
     return (
       <View
@@ -174,6 +237,7 @@ export default function ConversationScreen({ route, navigation }) {
           style={[
             styles.messageBubble,
             isMine ? styles.myBubble : styles.otherBubble,
+            hasImage && styles.imageBubble,
           ]}
         >
           {/* Show sender name in group chats if message is not from current user */}
@@ -181,14 +245,33 @@ export default function ConversationScreen({ route, navigation }) {
             <Text style={styles.senderLabel}>{senderName}</Text>
           )}
 
-          <Text
-            style={[
-              styles.messageContent,
-              isMine ? styles.myText : styles.otherText,
-            ]}
-          >
-            {item.content}
-          </Text>
+          {/* Render image attachment if present */}
+          {hasImage && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setFullscreenImage(item.imageInfo)}
+              style={styles.bubbleImageContainer}
+            >
+              <Image
+                source={{ uri: item.imageInfo }}
+                style={styles.bubbleImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Text content / caption */}
+          {item.content ? (
+            <Text
+              style={[
+                styles.messageContent,
+                isMine ? styles.myText : styles.otherText,
+                hasImage && styles.captionText,
+              ]}
+            >
+              {item.content}
+            </Text>
+          ) : null}
 
           <Text
             style={[
@@ -285,8 +368,18 @@ export default function ConversationScreen({ route, navigation }) {
           />
         )}
 
-        {/* Input Bar */}
+        {/* WhatsApp-style Input Bar */}
         <View style={styles.inputContainer}>
+          <TouchableOpacity
+            style={styles.attachButton}
+            onPress={() => setShowAttachModal(true)}
+            disabled={sending || sendingImage}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Attach photo or camera"
+          >
+            <Ionicons name="add" size={26} color="#007AFF" />
+          </TouchableOpacity>
+
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
@@ -309,11 +402,55 @@ export default function ConversationScreen({ route, navigation }) {
             {sending ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.sendText}>➤</Text>
+              <Ionicons name="send" size={17} color="#FFFFFF" style={{ marginLeft: 2 }} />
             )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* WhatsApp-style Attach options modal */}
+      <AttachmentOptionsModal
+        visible={showAttachModal}
+        onClose={() => setShowAttachModal(false)}
+        onSelectCamera={handleOpenCamera}
+        onSelectLibrary={handleOpenGallery}
+      />
+
+      {/* WhatsApp-style Image preview & caption modal */}
+      <ImagePreviewModal
+        visible={showPreviewModal}
+        imageUri={selectedImage?.uri}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setSelectedImage(null);
+        }}
+        onSend={handleSendImage}
+        sending={sendingImage}
+      />
+
+      {/* Fullscreen Image Viewer Modal */}
+      <Modal
+        visible={Boolean(fullscreenImage)}
+        transparent={false}
+        animationType="fade"
+        onRequestClose={() => setFullscreenImage(null)}
+      >
+        <SafeAreaView style={styles.fullscreenContainer}>
+          <TouchableOpacity
+            style={styles.fullscreenCloseBtn}
+            onPress={() => setFullscreenImage(null)}
+          >
+            <Ionicons name="close" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          {fullscreenImage && (
+            <Image
+              source={{ uri: fullscreenImage }}
+              style={styles.fullscreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -416,6 +553,25 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     borderRadius: 18,
   },
+  imageBubble: {
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 6,
+  },
+  bubbleImageContainer: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  bubbleImage: {
+    width: 220,
+    height: 180,
+    borderRadius: 14,
+    backgroundColor: '#E0E0E0',
+  },
+  captionText: {
+    marginTop: 6,
+    paddingHorizontal: 6,
+  },
   myBubble: {
     backgroundColor: '#007AFF',
     borderBottomRightRadius: 4,
@@ -429,6 +585,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#007AFF',
     marginBottom: 2,
+    paddingHorizontal: 4,
   },
   messageContent: {
     fontSize: 15,
@@ -444,6 +601,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
     alignSelf: 'flex-end',
+    paddingHorizontal: 4,
   },
   myTime: {
     color: 'rgba(255, 255, 255, 0.7)',
@@ -463,10 +621,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#E8E8E8',
+  },
+  attachButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EEF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+    marginLeft: 2,
   },
   input: {
     flex: 1,
@@ -492,11 +660,21 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: '#C7C7CC',
   },
-  sendText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    marginLeft: 2,
+  fullscreenContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '85%',
   },
 });
-
