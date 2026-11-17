@@ -1,0 +1,15 @@
+[submodule "SysGuard"]
+	path = SysGuard
+	url = https://github.com/MAYANKSHARMA01010/SysGuard.git
+[submodule "Dearly"]
+	path = Dearly
+	url = https://github.com/MAYANKSHARMA01010/Dearly.git
+[submodule "DevDesk"]
+	path = DevDesk
+	url = https://github.com/MAYANKSHARMA01010/DevDesk.git
+[submodule "NST_AD"]
+	path = NST_AD
+	url = https://github.com/vaibhav7000/NST_AD.git
+[submodule "contest/ProcessDesk-Debug-an-Electron-React-Process-Monitor---Application-Developmen---sh6iq9fwonrj"]
+	path = contest/ProcessDesk-Debug-an-Electron-React-Process-Monitor---Application-Developmen---sh6iq9fwonrj
+	url = https://github.com/MAYANKSHARMA01010/ProcessDesk-Debug-an-Electron-React-Process-Monitor---Application-Developmen---sh6iq9fwonrj.git
