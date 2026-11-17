@@ -4,10 +4,12 @@
   "description": "Agent-less macOS Security Vulnerability & Network Scanner",
   "type": "module",
   "bin": {
-    "sysguard": "./dist/cli/index.js"
+    "sysguard": "./dist/cli/index.js",
+    "guard": "./dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",
+    "postbuild": "chmod +x dist/cli/index.js",
     "dev": "tsx src/cli/index.ts",
     "cli": "tsx src/cli/index.ts",
     "start": "node dist/cli/index.js",
